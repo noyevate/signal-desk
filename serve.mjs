@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFile, realpath } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { startTelegramMonitor } from './telegram-monitor.mjs';
 
 const root = await realpath(fileURLToPath(new URL('./dist/', import.meta.url)));
 const host = '127.0.0.1';
@@ -50,4 +51,12 @@ server.on('error', (err) => {
     : err.message);
   process.exitCode = 1;
 });
-server.listen(port, host, () => console.log('Signal Desk is running at http://' + host + ':' + port + '\nPress Control-C to stop.'));
+server.listen(port, host, async () => {
+  console.log('Signal Desk is running at http://' + host + ':' + port + '\nPress Control-C to stop.');
+  try {
+    const monitor = await startTelegramMonitor();
+    if (!monitor) console.log('Telegram monitoring is off: set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to enable it.');
+  } catch (error) {
+    console.error('Telegram monitoring is off: ' + error.message);
+  }
+});
